@@ -1,0 +1,43 @@
+repos:
+  - repo: local
+    hooks: # Hooks are the tools that will be run on your code
+      - id: pylint # Run the pylint before commit
+        name: pylint
+        entry: uv run pylint
+        language: system
+        types: [python]
+        args: [
+            "-rn", # Only display messages
+            "-sn", # Don't display the score
+            "--rcfile=.pylintrc", # Link to your config file
+            "--load-plugins=pylint.extensions.docparams", # Load an extension
+        ]
+        pass_filenames: true
+
+      - id: check-commit-msg
+        name: check commit msg
+        entry: |
+         bash -c '
+            MSG=$(cat "$0")
+            if [[ "$MSG" =~ ^(feat|fix|docs|style|refactor|perf|test|chore|build|ci)(\([a-z-]+\))?:\ .+ ]]; then
+            FIRST_WORD=$(echo "$MSG" | cut -d: -f2 | cut -d" " -f2)
+              if [[ "$FIRST_WORD" =~ (ed|ing|s)$ ]]; then
+                echo "⚠️  Warning: Use the imperative mood. e.g. add instead of added, fix instead of fixes"
+                echo "💡 Example: feat(auth): add social login"
+                exit 1
+              else
+                echo "✅ Valid commit message!x"
+                exit 0
+              fi
+            else
+              echo "❌ Invalid format!"
+              echo "📝 Use: <type>(<scope>): <description>"
+              echo "📖 Use IMPERATIVE mood: example: add not added, fix not fixed"
+              echo "💡 Example: feat(auth): add social login"
+              exit 1
+            fi
+          '
+        language: system
+        pass_filenames: true
+        verbose: true
+        stages: [commit-msg]
